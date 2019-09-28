@@ -1,0 +1,151 @@
+# 안드로이드 센서 사용.  
+
+### 스마트폰에 들어가 있는 근접센서와 가속도센서를 사용해 보기.
+
+#### MainActivity.java
+~~~~~~
+package com.example.proximity;
+
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.os.Bundle;
+
+
+import android.widget.TextView;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.res.ResourcesCompat;
+
+public class MainActivity extends AppCompatActivity {
+    TextView proximityView;
+    TextView accelerometerView;
+
+    SensorManager manager;
+    //근접센서
+    Sensor proximity;
+    //가속도 센서
+    Sensor accelerometer;
+
+    //근접센서 max 값.
+    float proximityMaximumRange;
+    //가속도 센서 이전값
+    float lastX;
+    float lastY;
+    float lastZ;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        proximityView = (TextView) findViewById(R.id.lab2_proximity);
+        accelerometerView=(TextView)findViewById(R.id.lab2_accelerometer);
+
+        //add~~~~~~~~~~~~~~~~~~~~~
+        manager = (SensorManager) this.getSystemService(SENSOR_SERVICE);
+        proximity = manager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
+        if(proximity != null){
+            proximityMaximumRange=proximity.getMaximumRange();
+            
+        }
+        accelerometer = manager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        //add~~~~~~~~~~~~~~~
+        manager.registerListener(listener, proximity,SensorManager.SENSOR_DELAY_UI);
+        manager.registerListener(listener, accelerometer,SensorManager.SENSOR_DELAY_NORMAL);
+    }
+    
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        //add~~~~~~~~~~~~~~~
+        manager.unregisterListener(listener);
+    }
+    
+    SensorEventListener listener=new SensorEventListener() {
+        @Override
+        public void onSensorChanged(SensorEvent sensorEvent) {
+
+            if(sensorEvent.sensor.getType()==Sensor.TYPE_PROXIMITY){
+                float distance = sensorEvent.values[0];
+                if(distance < proximityMaximumRange){
+                    proximityView.setBackgroundColor(
+                            ResourcesCompat.getColor(getResources(),
+                                    android.R.color.holo_red_dark,null));
+                                    proximityView.setText("가까워 졌습니다.");
+                }else {
+                    proximityView.setBackgroundColor(
+                            ResourcesCompat.getColor(getResources(),
+                                    android.R.color.holo_blue_light,null));
+                                    proximityView.setText("멀어 졌습니다.");
+                }
+            }else if(sensorEvent.sensor.getType()== Sensor.TYPE_ACCELEROMETER){
+                float xValue=Math.abs(sensorEvent.values[0]-lastX);
+                float yValue=Math.abs(sensorEvent.values[1]-lastY);
+                float zValue=Math.abs(sensorEvent.values[2]-lastZ);
+                
+                if(xValue+yValue+zValue > 20){
+                    accelerometerView.setBackgroundColor(
+                            ResourcesCompat.getColor(getResources(),
+                                    android.R.color.holo_orange_dark,null));
+                }else {
+                    accelerometerView.setBackgroundColor(
+                            ResourcesCompat.getColor(getResources(),
+                                    android.R.color.holo_blue_light,null));
+                }
+            }
+        }
+
+        @Override
+        public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+        }
+    };
+    //add~~~~~~~~~~~~~~~~~~~~~
+}
+~~~~~~
+
+#### 2.activity_main.xml
+~~~~~~
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/lab2_proximity"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="@android:color/holo_blue_light"
+        android:gravity="center"
+        android:textSize="30dp"
+        android:textColor="@android:color/white"
+        android:text="Proximity"
+        />
+
+    <TextView
+        android:id="@+id/lab2_accelerometer"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="@android:color/holo_blue_light"
+        android:gravity="center"
+        android:textSize="30dp"
+        android:textColor="@android:color/white"
+        android:text="Accelerometer"
+        />
+
+
+</LinearLayout>
+
+~~~~~~
